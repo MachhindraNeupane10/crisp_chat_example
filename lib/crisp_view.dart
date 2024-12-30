@@ -12,7 +12,6 @@ String _crispEmbedUrl({
   required String websiteId,
   required String locale,
   String? userToken,
-
 }) {
   String url = CRISP_BASE_URL + '/chat/embed/?website_id=$websiteId';
 
@@ -31,8 +30,8 @@ class CrispView extends StatefulWidget {
   final bool clearCache;
   final void Function(String url)? onLinkPressed;
 
-  ///Set to true to make the background of the WebView transparent. 
-  ///If your app has a dark theme, 
+  ///Set to true to make the background of the WebView transparent.
+  ///If your app has a dark theme,
   ///this can prevent a white flash on initialization. The default value is false.
   final bool transparentBackground;
   @override
@@ -50,12 +49,22 @@ class _CrispViewState extends State<CrispView> {
   InAppWebViewController? _webViewController;
   String? _javascriptString;
 
-  late InAppWebViewGroupOptions _options;
+  // late InAppWebViewGroupOptions _options;
+  late InAppWebViewSettings _optionsecond;
 
   @override
   void initState() {
     super.initState();
-    _options = InAppWebViewGroupOptions(
+    _optionsecond = InAppWebViewSettings(
+      javaScriptEnabled: true,
+      supportZoom: true,
+      transparentBackground: widget.transparentBackground,
+      clearCache: widget.clearCache,
+      useShouldOverrideUrlLoading: true,
+      mediaPlaybackRequiresUserGesture: false,
+    );
+
+    /* _options = InAppWebViewGroupOptions(
       crossPlatform: InAppWebViewOptions(
         transparentBackground: widget.transparentBackground,
         clearCache: widget.clearCache,
@@ -69,7 +78,7 @@ class _CrispViewState extends State<CrispView> {
       ios: IOSInAppWebViewOptions(
         allowsInlineMediaPlayback: true,
       ),
-    );
+    );*/
 
     _javascriptString = """
       var a = setInterval(function(){
@@ -92,8 +101,7 @@ class _CrispViewState extends State<CrispView> {
             () => VerticalDragGestureRecognizer(),
           ),
         ),
-      initialUrlRequest:
-      URLRequest(
+      initialUrlRequest: URLRequest(
         url: WebUri.uri(
           Uri.parse(_crispEmbedUrl(
             websiteId: widget.crispMain.websiteId,
@@ -109,13 +117,21 @@ class _CrispViewState extends State<CrispView> {
           locale: widget.crispMain.locale,
           userToken: widget.crispMain.userToken,
         )),
-      )*/,
-      initialOptions: _options,
+      )*/
+      ,
+      // initialOptions: _options,
+      initialSettings: _optionsecond,
       onWebViewCreated: (InAppWebViewController controller) {
         _webViewController = controller;
       },
       onLoadStop: (InAppWebViewController controller, Uri? url) async {
         _webViewController?.evaluateJavascript(source: _javascriptString!);
+      },
+      onPermissionRequest: (controller, permissionRequest) async {
+        final requestResoureces = permissionRequest.resources;
+        return PermissionResponse(
+            resources: requestResoureces,
+            action: PermissionResponseAction.GRANT);
       },
       shouldOverrideUrlLoading: (controller, navigationAction) async {
         var uri = navigationAction.request.url;
@@ -133,11 +149,11 @@ class _CrispViewState extends State<CrispView> {
             "javascript",
             "about"
           ].contains(uri?.scheme)) {
-            if (await canLaunch(url)) {
+            if (await canLaunchUrl(Uri.parse(url))) {
               if (widget.onLinkPressed != null)
                 widget.onLinkPressed!(url);
               else {
-                await launch(url);
+                await launchUrl(Uri.parse(url));
               }
               return NavigationActionPolicy.CANCEL;
             }

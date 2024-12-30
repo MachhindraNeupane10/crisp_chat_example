@@ -1,5 +1,6 @@
 import 'package:crisp/crisp.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() => runApp(MyApp());
 
@@ -43,6 +44,7 @@ class _MyAppState extends State<MyApp> {
       "order_id": "111",
       "app_version": "0.1.1",
     });
+    requestMicrophonePermission();
   }
 
   @override
@@ -60,3 +62,14 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+
+
+Future<void> requestMicrophonePermission() async {
+  var status = await Permission.microphone.request();
+  if (status.isGranted) {
+    print("Microphone permission granted");
+  } else {
+    print("Microphone permission denied");
+  }
+}
+
